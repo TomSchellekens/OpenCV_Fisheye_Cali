@@ -96,12 +96,33 @@ if __name__ == '__main__':
     ax.set_title('Confusion Matrix')
     plt.show()
 
-    #Investigate error in the model
+    #Investigate errors in the model
     errors = (y_pred_classes - y_true != 0)
     y_pred_classes_errors = y_pred_classes[errors]
     y_pred_erros = y_pred[errors]
     y_true_erros = y_true[errors]
     x_test_erros = x_test[errors]
+
+    y_pred_erros_proba = np.max(y_pred_erros, axis=1)
+    true_error_proba = np.diagonal(np.take(y_pred_erros, y_true_erros, axis=1))
+    diff_errors_pred_true = y_pred_erros_proba - true_error_proba
+
+    sorted_idx_diff_errors = np.argsort(diff_errors_pred_true)
+    top_idx_diff_errors = sorted_idx_diff_errors[-5:]
+
+    #show top errors
+    num = len(top_idx_diff_errors)
+    f, ax = plt.subplots(1, num, figsize=(30, 30))
+
+    for i in range(0, num):
+        idx = top_idx_diff_errors[i]
+        sample = x_test_erros[idx].reshape(28,28)
+        y_t = y_true_erros[idx]
+        y_p = y_pred_classes_errors[idx]
+        ax[i].imshow(sample, cmap='gray')
+        ax[i].set_title("Predicted Label: {}\nTrue Label: {}".format(y_p, y_t), fontsize=22)
+
+    plt.show()
 
 
 
