@@ -15,14 +15,9 @@ nn.create_network()
 test_loss, test_acc = nn.evaluate_model()
 nn.confusion_matrix()
 
-for i in range(0, 14):
-    batch_sizes.append(str(2 ** i))
-
-width = max(len(str(elem)) for elem in batch_sizes) + 5
-
 layout_train_model = [
-    [Sg.Text('Enter the number of epochs:'), Sg.Combo(values=[i for i in range(1, 11)], key='EPOCHS')],
-    [Sg.Text('Select the batch size:'), Sg.Combo(values=batch_sizes, size=(width, 5), key='BATCH')],
+    [Sg.Text('Enter the number of epochs:'), Sg.Combo(values=[i for i in range(1, 21)], key='EPOCHS')],
+    [Sg.Text('Select the batch size:'), Sg.Combo(values=[str(2 ** i) for i in range(0, 14)], key='BATCH')],
     [Sg.Button('Train Model')],
     [Sg.Text('Test loss: '), Sg.Text(test_loss, key='LOSS')],
     [Sg.Text('Test Accuracy: '), Sg.Text(test_acc, key='ACC')],
