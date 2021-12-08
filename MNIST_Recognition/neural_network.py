@@ -7,6 +7,8 @@ from keras.layers import Dense, Dropout
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
 from keras.datasets import mnist
+from PIL import Image
+
 
 
 class neural_network_mnist:
@@ -19,15 +21,6 @@ class neural_network_mnist:
         self.test_acc = 0
         self.y_pred = 0
         self.y_pred_classes = 0
-
-    def show_possible_labels(self):
-        f, ax = plt.subplots(1, self.num_classes, figsize=(20, 20))
-
-        for i in range(0, self.num_classes):
-            sample = self.x_train[self.y_train == i][0]
-            ax[i].imshow(sample, cmap='gray')
-            ax[i].set_title("Label: {}".format(i), fontsize=16)
-        plt.show()
 
     def prepare_data(self):
         #
@@ -49,6 +42,7 @@ class neural_network_mnist:
         self.model.add(Dense(units=10, activation='softmax'))
 
         self.model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        self.model.save_weights('model_default.h5')
         self.model.summary()
 
     def train_model(self, batch_size, epochs):
@@ -56,7 +50,7 @@ class neural_network_mnist:
 
     def evaluate_model(self):
         self.test_loss, self.test_acc = self.model.evaluate(self.x_test, self.y_test)
-        print("Test loss: {}\nTest Accuracy: {}".format(self.test_loss, self.test_acc))
+        return round(self.test_loss, 3), round(self.test_acc, 3)
 
     def predict_random_value(self):
         self.y_pred = self.model.predict(self.x_test)
@@ -68,11 +62,12 @@ class neural_network_mnist:
         y_sample_true = y_true[random_idx]
         y_sample_pred_class = self.y_pred_classes[random_idx]
 
-        plt.title("Predicted: {}\nTrue value: {}".format(y_sample_pred_class, y_sample_true), fontsize=16)
-        plt.imshow(x_sample.reshape(28, 28), cmap='gray')
-        plt.show()
+        return x_sample, y_sample_pred_class, y_sample_true
 
     def confusion_matrix(self):
+        self.y_pred = self.model.predict(self.x_test)
+        self.y_pred_classes = np.argmax(self.y_pred, axis=1)
+
         y_true = np.argmax(self.y_test, axis=1)
         confusion_mtx = confusion_matrix(y_true, self.y_pred_classes)
         fig, ax = plt.subplots(figsize=(15, 10))
@@ -80,34 +75,9 @@ class neural_network_mnist:
         ax.set_xlabel('Preditect label')
         ax.set_ylabel('True label')
         ax.set_title('Confusion Matrix')
-        plt.show()
+        plt.savefig('confusion_matrix.png')
+        img = Image.open("confusion_matrix.png").resize((1200, 800))
+        img.save("confusion_matrix.png")
 
-    def find_erros(self):
-        # Investigate errors in the model
-        y_true = np.argmax(self.y_test, axis=1)
-        errors = (self.y_pred_classes - y_true != 0)
-        y_pred_classes_errors = self.y_pred_classes[errors]
-        y_pred_erros = self.y_pred[errors]
-        y_true_erros = y_true[errors]
-        x_test_erros = self.x_test[errors]
-
-        y_pred_erros_proba = np.max(y_pred_erros, axis=1)
-        true_error_proba = np.diagonal(np.take(y_pred_erros, y_true_erros, axis=1))
-        diff_errors_pred_true = y_pred_erros_proba - true_error_proba
-
-        sorted_idx_diff_errors = np.argsort(diff_errors_pred_true)
-        top_idx_diff_errors = sorted_idx_diff_errors[-5:]
-
-        # show top errors
-        num = len(top_idx_diff_errors)
-        f, ax = plt.subplots(1, num, figsize=(30, 30))
-
-        for i in range(0, num):
-            idx = top_idx_diff_errors[i]
-            sample = x_test_erros[idx].reshape(28, 28)
-            y_t = y_true_erros[idx]
-            y_p = y_pred_classes_errors[idx]
-            ax[i].imshow(sample, cmap='gray')
-            ax[i].set_title("Predicted Label: {}\nTrue Label: {}".format(y_p, y_t), fontsize=22)
-
-        plt.show()
+    def reset_model(self):
+        self.model.load_weights('model_default.h5')
